@@ -1,0 +1,24 @@
+public static class LongArms
+{
+    private static bool enabled = false;
+    private static readonly Vector3 longArmSize = new Vector3(1.26f, 1.26f, 1.26f); // Slightly increased for better effect
+    private static readonly Vector3 defaultSize = Vector3.one;
+
+    public static void Toggle()
+    {
+        enabled = !enabled;
+        if (GorillaTagger.Instance == null || 
+            GorillaTagger.Instance.offlineVRRig == null ||
+            GorillaTagger.Instance.offlineVRRig.leftHandTransform == null ||
+            GorillaTagger.Instance.offlineVRRig.rightHandTransform == null)
+        {
+            Debug.LogError("[LongArms] VR rig or hand transforms not found!");
+            enabled = false; // Disable if rig is invalid
+            return;
+        }
+
+        GorillaTagger.Instance.offlineVRRig.leftHandTransform.localScale = enabled ? longArmSize : defaultSize;
+        GorillaTagger.Instance.offlineVRRig.rightHandTransform.localScale = enabled ? longArmSize : defaultSize;
+        Debug.Log($"[LongArms] {(enabled ? "Enabled" : "Disabled")} arm scaling.");
+    }
+}
