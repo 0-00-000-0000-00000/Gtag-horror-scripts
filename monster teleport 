@@ -1,0 +1,69 @@
+public static class TeleportMonsters
+{
+    private static bool enabled = false;
+    private static Coroutine teleportRoutine = null;
+    private const float SAFE_DISTANCE = 5f; // Safe distance from player
+    private const float TELEPORT_INTERVAL = 2f; // Time between teleports
+
+    public static void Toggle()
+    {
+        enabled = !enabled;
+        if (enabled)
+        {
+            if (GorillaTagger.Instance == null || GorillaTagger.Instance.headCollider == null)
+            {
+                Debug.LogError("[TeleportMonsters] Player head collider not found!");
+                enabled = false;
+                return;
+            }
+            teleportRoutine = GorillaTagger.Instance.StartCoroutine(TeleportLoop());
+            Debug.Log("[TeleportMonsters] Started teleporting monsters.");
+        }
+        else if (teleportRoutine != null)
+        {
+            GorillaTagger.Instance.StopCoroutine(teleportRoutine);
+            teleportRoutine = null;
+            Debug.Log("[TeleportMonsters] Stopped teleporting monsters.");
+        }
+    }
+
+    private static IEnumerator TeleportLoop()
+    {
+        while (enabled)
+        {
+            var monsters = GameObject.FindObjectsOfType<MonoBehaviour>()
+                .Where(mb => mb != null && (
+                    mb.GetType().Name.Contains("HorrorAI") ||
+                    mb.GetType().Name.Contains("EnemyController")))
+                .Select(mb => mb.gameObject)
+                .Where(go => go != null)
+                .Distinct()
+                .ToList();
+
+            if (!monsters.Any())
+            {
+                Debug.LogWarning("[TeleportMonsters] No monsters found!");
+                yield return new WaitForSeconds(TELEPORT_INTERVAL);
+                continue;
+            }
+
+            foreach (var monster in monsters)
+            {
+                if (!enabled || monster == null) continue;
+
+                // Calculate position in front of player
+                Vector3 playerPos = GorillaTagger.Instance.headCollider.transform.position;
+                Vector3 playerForward = GorillaTagger.Instance.headCollider.transform.forward;
+                Vector3 teleportPos = playerPos + playerForward * SAFE_DISTANCE;
+
+                // Ensure monster is at ground level (optional, adjust based on game)
+                teleportPos.y = Terrain.activeTerrain?.SampleHeight(teleportPos) ?? playerPos.y;
+
+                monster.transform.position = teleportPos;
+                Debug.Log($"[TeleportMonsters] Teleported {monster.name} to {teleportPos}");
+
+                yield return new WaitForSeconds(TELEPORT_INTERVAL);
+            }
+        }
+    }
+}
