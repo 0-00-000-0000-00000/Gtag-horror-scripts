@@ -1,0 +1,32 @@
+public static class DisablePunch
+{
+    private static bool enabled = false;
+    private static GameObject punchObject = null;
+
+    public static void Toggle()
+    {
+        enabled = !enabled;
+        if (enabled)
+        {
+            // Find PunchMod object
+            punchObject = GameObject.FindObjectsOfType<GameObject>()
+                .FirstOrDefault(obj => obj.name.Contains("PunchMod") || 
+                                      obj.GetComponentsInChildren<Transform>().Any(t => t.name.Contains("PunchMod")));
+
+            if (punchObject != null)
+            {
+                punchObject.SetActive(false);
+                Debug.Log($"[DisablePunch] PunchMod disabled: {punchObject.name}");
+            }
+            else
+            {
+                Debug.LogWarning("[DisablePunch] No PunchMod object found.");
+            }
+        }
+        else if (punchObject != null)
+        {
+            punchObject.SetActive(true);
+            Debug.Log($"[DisablePunch] PunchMod re-enabled: {punchObject.name}");
+        }
+    }
+}
