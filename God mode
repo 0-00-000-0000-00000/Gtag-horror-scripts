@@ -1,0 +1,41 @@
+public static class GodMode
+{
+    private static bool enabled = false;
+
+    public static void Toggle()
+    {
+        enabled = !enabled;
+        SetGodMode(enabled);
+        Debug.Log($"[GodMode] {(enabled ? "Enabled" : "Disabled")}");
+    }
+
+    private static void SetGodMode(bool state)
+    {
+        if (GorillaTagger.Instance == null || 
+            GorillaTagger.Instance.bodyCollider == null || 
+            GorillaTagger.Instance.headCollider == null)
+        {
+            Debug.LogError("[GodMode] Player colliders not found!");
+            return;
+        }
+
+        var monsters = GameObject.FindObjectsOfType<Collider>()
+            .Where(c => c.GetComponent<MonoBehaviour>() != null && (
+                c.GetComponent<MonoBehaviour>().GetType().Name.Contains("HorrorAI") ||
+                c.GetComponent<MonoBehaviour>().GetType().Name.Contains("EnemyController")))
+            .Distinct();
+
+        foreach (var col in monsters)
+        {
+            if (col == null) continue;
+            Physics.IgnoreCollision(col, GorillaTagger.Instance.bodyCollider, state);
+            Physics.IgnoreCollision(col, GorillaTagger.Instance.headCollider, state);
+            Debug.Log($"[GodMode] Collision {(state ? "ignored" : "restored")} for {col.gameObject.name}");
+        }
+
+        if (!monsters.Any())
+        {
+            Debug.LogWarning("[GodMode] No monsters found with HorrorAI or EnemyController.");
+        }
+    }
+}
